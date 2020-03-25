@@ -1,0 +1,41 @@
+daml 1.2
+module User where
+
+template User with
+        user: Party
+        sodas: Int      -- Number of sodas they own
+        balance: Int    -- Expressed as # of quarters
+    where
+        signatory user
+
+        ensure
+            balance >= 0 &&
+            sodas >= 0
+
+        key user : Party
+        maintainer key
+        
+        controller user can
+            SpendCoins
+                : ContractId User
+                with
+                    amount : Int
+                do
+                    assertMsg "Can't spend more than you own" (amount <= balance) 
+                    create this with
+                        balance = balance - amount
+            
+            ReceiveCoins
+                : ContractId User
+                with
+                    amount : Int
+                do
+                    create this with
+                        balance = balance + amount
+            
+            ReceiveSoda
+                : ContractId User
+                with
+                do
+                    create this with
+                        sodas = sodas + 1

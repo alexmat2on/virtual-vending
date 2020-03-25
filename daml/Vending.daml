@@ -1,0 +1,117 @@
+daml 1.2
+module Vending where    
+
+import User
+
+-- Model a single-item vending machine with an owner, and a customer
+-- The price, pending balance, and final balance are all expressed as # of quarters
+template Vending with
+        owner: Party
+        customer: Party
+        stock: Int              -- Number of soda cans left
+        price: Int
+        pending: Int
+        balance: Int
+    where
+        signatory owner
+        observer customer
+
+        ensure
+            stock > 0 &&
+            price > 0 &&
+            pending >= 0 &&
+            balance >= 0
+
+        key owner : Party
+        maintainer key
+
+        controller owner can
+            Restock
+                : (ContractId Vending)
+                with
+                    amount : Int
+                do
+                    assertMsg "You can only add more cans!" (amount > 0)
+                    create this with
+                        stock = stock + amount
+            
+            Collect
+                : (ContractId Vending, ContractId User)
+                with
+                    ownerUser: ContractId User
+                do
+                    o <- exercise ownerUser ReceiveCoins with amount = pending + balance
+                    v <- create this with
+                        pending = 0
+                        balance = 0
+                    return (v, o)
+
+        controller customer can
+            InsertCoin 
+                : (ContractId Vending, ContractId User)
+                with
+                    customerUser : ContractId User
+                do
+                    v <- create this with
+                        pending = pending + 1
+                    c <- exercise customerUser SpendCoins with amount = 1
+                    return (v, c)
+
+            Abort
+                : (ContractId Vending, ContractId User)
+                with
+                    customerUser: ContractId User
+                do
+                    assertMsg "No change left in the machine!" (pending > 0)
+                    c <- exercise customerUser ReceiveCoins with amount = pending
+                    v <- create this with
+                        pending = 0
+                    return (v, c)
+                
+            Dispense
+                : (ContractId Vending, ContractId User)
+                with
+                    customerUser: ContractId User
+                do
+                    assertMsg "Give me more coins!" (pending >= price)
+                    assertMsg "Out of stock!" (stock > 0)
+                    v <- create this with
+                        pending = pending - price
+                        balance = balance + price
+                        stock = stock - 1
+                    c <- exercise customerUser ReceiveSoda
+                    return (v, c)
+
+test = scenario do
+    customer <- getParty "Alex"
+    owner <- getParty "Bob"
+
+    customerUser <- submit customer do
+        create User with
+            user = customer
+            sodas = 0
+            balance = 20
+
+    ownerUser <- submit owner do
+        create User with
+            user = owner
+            sodas = 0
+            balance = 0
+     
+    v1 <- submit owner do
+        create Vending with 
+            customer = customer
+            owner = owner
+            stock = 2
+            price = 2
+            pending = 0 
+            balance = 0
+    
+    (v1, customerUser) <- submit customer do
+        exercise v1 InsertCoin with customerUser = customerUser
+
+    (v1, customerUser) <- submit customer do
+        exercise v1 InsertCoin with customerUser = customerUser
+    
+    submit customer do
+        exercise v1 Dispense with customerUser = customerUser
