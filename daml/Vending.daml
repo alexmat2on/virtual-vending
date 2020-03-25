@@ -127,3 +127,28 @@ test = scenario do
     
     submit owner do
         exercise v1 Restock with amount = 5
+
+initialize = scenario do
+    owner <- getParty "Alice"
+    customer <- getParty "Bob"
+
+    customerUser <- submit customer do
+        create User with
+            user = customer
+            sodas = 0
+            balance = 42
+
+    ownerUser <- submit owner do
+        create User with
+            user = owner
+            sodas = 5
+            balance = 0
+     
+    submit owner do
+        create Vending with 
+            customer = customer
+            owner = owner
+            stock = 2
+            price = 4
+            pending = 0 
+            balance = 0
