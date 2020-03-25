@@ -83,7 +83,7 @@ template Vending with
                     return (v, c)
 
 test = scenario do
-    customer <- getParty "Alex"
+    customer <- getParty "Alice"
     owner <- getParty "Bob"
 
     customerUser <- submit customer do
@@ -113,5 +113,17 @@ test = scenario do
     (v1, customerUser) <- submit customer do
         exercise v1 InsertCoin with customerUser = customerUser
     
-    submit customer do
+    (v1, customerUser) <- submit customer do
         exercise v1 Dispense with customerUser = customerUser
+    
+    (v1, customerUser) <- submit customer do
+        exercise v1 InsertCoin with customerUser = customerUser
+    
+    (v1, customerUser) <- submit customer do
+        exercise v1 Abort with customerUser = customerUser
+    
+    (v1, ownerUser) <- submit owner do
+        exercise v1 Collect with ownerUser = ownerUser
+    
+    submit owner do
+        exercise v1 Restock with amount = 5
