@@ -3,7 +3,6 @@ import { Button, Form, Grid, Header, Image, Segment } from 'semantic-ui-react'
 import Credentials, { computeCredentials } from '../Credentials';
 import Ledger from '@daml/ledger';
 import { User } from '@daml-ts/virtual-vending-0.1.0/lib/User';
-import { Vending } from '@daml-ts/virtual-vending-0.1.0/lib/Vending';
 import { DeploymentMode, deploymentMode, ledgerId, httpBaseUrl, wsBaseUrl } from '../config';
 import { useEffect } from 'react';
 
@@ -21,23 +20,12 @@ const LoginScreen: React.FC<Props> = ({onLogin}) => {
     try {
       const ledger = new Ledger({token: credentials.token, httpBaseUrl, wsBaseUrl});
       let userContract = await ledger.lookupByKey(User, credentials.party);
-      let vendingContract = await ledger.lookupByKey(Vending, credentials.party);
       if (userContract === null) {
         const user = {user: credentials.party, sodas: "0", balance: "20"};
         userContract = await ledger.create(User, user);
       }
 
-      if (vendingContract === null) {
-        const vending = {
-          owner: credentials.party,
-          customer: credentials.party,
-          stock: "4",
-          price: "3",
-          pending: "0",
-          balance: "0"
-        }
-        vendingContract = await ledger.create(Vending, vending);
-      }
+      console.log("USER CONTRACT: ", userContract);
       onLogin(credentials);
     } catch(error) {
       alert(`Unknown error:\n${JSON.stringify(error)}`);

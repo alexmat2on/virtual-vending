@@ -6,10 +6,9 @@ parties:
 - Alice
 - Bob
 dependencies:
-# - daml-prim
+- daml-prim
 - daml-stdlib
 # - daml-trigger
 sandbox-options:
 - --wall-clock-time
 - --ledgerid=virtual-vending-sandbox
-# - --scenario=Vending:initialize

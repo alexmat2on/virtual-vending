@@ -15,7 +15,7 @@ template User with
         key user : Party
         maintainer key
         
-        controller user can
+        controller user can                
             SpendCoins
                 : ContractId User
                 with

@@ -7,17 +7,17 @@ import User
 -- The price, pending balance, and final balance are all expressed as # of quarters
 template Vending with
         owner: Party
-        customer: Party
-        stock: Int              -- Number of soda cans left
+        customers: [Party]
+        stock: Int              -- Number of drinks left
         price: Int
         pending: Int
         balance: Int
     where
         signatory owner
-        observer customer
+        observer customers
 
         ensure
-            stock > 0 &&
+            stock >= 0 &&
             price > 0 &&
             pending >= 0 &&
             balance >= 0
@@ -31,7 +31,7 @@ template Vending with
                 with
                     amount : Int
                 do
-                    assertMsg "You can only add more cans!" (amount > 0)
+                    assertMsg "You can only add more drinks!" (amount > 0)
                     create this with
                         stock = stock + amount
             
@@ -45,8 +45,17 @@ template Vending with
                         pending = 0
                         balance = 0
                     return (v, o)
+        
+            Disclose
+                : ContractId Vending
+                with
+                    newCustomer: Party
+                do
+                    assertMsg "Already disclosed" (newCustomer `notElem` customers)
+                    create this with customers = newCustomer :: customers
 
-        controller customer can
+
+        controller customers can
             InsertCoin 
                 : (ContractId Vending, ContractId User)
                 with
@@ -100,7 +109,7 @@ test = scenario do
      
     v1 <- submit owner do
         create Vending with 
-            customer = customer
+            customers = [customer]
             owner = owner
             stock = 2
             price = 2
@@ -146,7 +155,7 @@ initialize = scenario do
      
     submit owner do
         create Vending with 
-            customer = customer
+            customers = [customer]
             owner = owner
             stock = 2
             price = 4

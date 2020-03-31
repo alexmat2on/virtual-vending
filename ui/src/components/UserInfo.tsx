@@ -1,5 +1,6 @@
 import React from 'react';
 import { Container, Grid, Segment } from 'semantic-ui-react';
+import MultiItems from './MultiItems';
 
 type Props = {
   coins: string;
@@ -20,7 +21,7 @@ const UserInfo: React.FC<Props> = ({coins, sodas}) => {
           <Grid.Column>
             <Segment>
               <b>Sodas</b><br />
-              {sodas}
+              <MultiItems num={sodas} />
             </Segment>
           </Grid.Column>
         </Grid.Row>
